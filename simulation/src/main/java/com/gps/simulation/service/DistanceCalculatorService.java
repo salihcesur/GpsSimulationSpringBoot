@@ -1,6 +1,5 @@
 package com.gps.simulation.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
@@ -9,11 +8,10 @@ import org.json.JSONObject;
 @Service
 public class DistanceCalculatorService {
 
-    @Value("${google.api.key}")
-    private String apiKey;
+    private static final String API_KEY = "****";
 
     public double getRoadDistance(String origin, String destination) {
-        String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + apiKey;
+        String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + API_KEY;
 
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -26,6 +24,7 @@ public class DistanceCalculatorService {
                 .getJSONObject("distance")
                 .getDouble("value");
 
+        // Mesafeyi kilometreye çeviriyoruz
         return distanceInMeters / 1000;
     }
 }
