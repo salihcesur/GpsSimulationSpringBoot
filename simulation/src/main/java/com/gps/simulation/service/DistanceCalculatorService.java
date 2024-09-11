@@ -8,7 +8,7 @@ import org.json.JSONObject;
 @Service
 public class DistanceCalculatorService {
 
-    private static final String API_KEY = "AIzaSyAoyH2S0s-LqCrGKcFmF4lmV06_mwKlKK8";
+    private static final String API_KEY = "****";
 
     public double getRoadDistance(String origin, String destination) {
         String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + API_KEY;
