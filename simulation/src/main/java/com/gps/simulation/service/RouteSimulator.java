@@ -27,7 +27,7 @@ public class RouteSimulator {
 
     @Async("taskExecutor")
     public void simulateJourney(int vehicleCount, int distanceInterval) {
-        double totalDistance = distanceCalculatorService.getRoadDistance("Istanbul", "Ankara");
+        double totalDistance = distanceCalculatorService.getRoadDistance("Istanbul", "Erzincan");
         List<Vehicle> vehicles = createVehicles(vehicleCount, totalDistance);
 
         for (Vehicle vehicle : vehicles) {
@@ -44,7 +44,7 @@ public class RouteSimulator {
                 " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı. Toplam mesafe: " + totalDistance + " km.");
 
         while (remainingDistance > 0) {
-            double distanceCovered = vehicle.getSpeed() / 60.0;
+            double distanceCovered = (vehicle.getSpeed() / 60.0) ;
             remainingDistance -= distanceCovered;
             distanceSinceLastMessage += distanceCovered;
 
@@ -52,14 +52,15 @@ public class RouteSimulator {
                 remainingDistance = 0;
             }
 
-            if (distanceSinceLastMessage >= distanceInterval) {
+            if (Math.abs(distanceSinceLastMessage - distanceInterval) < 0.001) {
                 sendLocationMessage(vehicle, remainingDistance);
                 distanceSinceLastMessage = 0;
             }
 
+
             if (remainingDistance > 0) {
                 try {
-                    Thread.sleep(1000); // 1 saati 1 dakikaya simüle ediyoruz
+                    Thread.sleep(500); // 1 saati 1 dakikaya simüle ediyoruz
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

@@ -33,7 +33,7 @@ public class Vehicle {
     public Vehicle(String vehicleId, double totalDistance) {
         this.vehicleId = vehicleId;
         this.totalDistance = totalDistance;
-        this.speed = new int[]{100,300,500}[new java.util.Random().nextInt(3)];
+        this.speed = new int[]{100,300,200}[new java.util.Random().nextInt(3)];
         this.remainingKm = totalDistance;
     }
 }
