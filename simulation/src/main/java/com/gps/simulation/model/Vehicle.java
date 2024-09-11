@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Vehicle {
 
-    @Id // Bu alanın tablo için birincil anahtar olduğunu belirtir
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // ID'nin otomatik olarak arttırılacağını belirtir
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String vehicleId;
@@ -30,11 +30,10 @@ public class Vehicle {
 
     private int speed;
 
-    // İki parametreli constructor
     public Vehicle(String vehicleId, double totalDistance) {
         this.vehicleId = vehicleId;
         this.totalDistance = totalDistance;
-        this.speed = new int[]{100,150,200}[new java.util.Random().nextInt(3)];
+        this.speed = new int[]{100,300,500}[new java.util.Random().nextInt(3)];
         this.remainingKm = totalDistance;
     }
 }

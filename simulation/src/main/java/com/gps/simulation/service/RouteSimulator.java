@@ -1,67 +1,72 @@
 package com.gps.simulation.service;
 
 import com.gps.simulation.model.Vehicle;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.springframework.stereotype.Service;
 
 @Service
+@EnableAsync
 public class RouteSimulator {
 
     private final DistanceCalculatorService distanceCalculatorService;
 
-    // Başlangıç ve bitiş şehirleri
-    private String origin = "Istanbul";
-    private String destination = "Ankara";
+    @Autowired
+    @Lazy
+    private RouteSimulator self;
 
     public RouteSimulator(DistanceCalculatorService distanceCalculatorService) {
         this.distanceCalculatorService = distanceCalculatorService;
     }
 
+    @Async("taskExecutor")
     public void simulateJourney(int vehicleCount, int distanceInterval) {
-        // Karayolu mesafesini Google API'den alıyoruz
-        double totalDistance = distanceCalculatorService.getRoadDistance(origin, destination);
+        double totalDistance = distanceCalculatorService.getRoadDistance("Istanbul", "Ankara");
         List<Vehicle> vehicles = createVehicles(vehicleCount, totalDistance);
 
         for (Vehicle vehicle : vehicles) {
-            double remainingDistance = totalDistance;
-            double distanceSinceLastMessage = 0; // Mesaj atılmasından sonra gidilen toplam mesafe
+            self.simulateVehicleJourney(vehicle, totalDistance, distanceInterval); // self ile asenkron simülasyon
+        }
+    }
 
-            System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() +
-                    " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı. Toplam mesafe: " + totalDistance + " km.");
+    @Async("taskExecutor")
+    public void simulateVehicleJourney(Vehicle vehicle, double totalDistance, int distanceInterval) {
+        double remainingDistance = totalDistance;
+        double distanceSinceLastMessage = 0;
 
-            long lastTime = System.currentTimeMillis(); // Başlangıç zamanını alıyoruz
-            while (remainingDistance > 0) {
-                long currentTime = System.currentTimeMillis(); // Şu anki zamanı al
-                long elapsedTime = currentTime - lastTime; // Geçen süreyi hesapla (milisaniye)
+        System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() +
+                " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı. Toplam mesafe: " + totalDistance + " km.");
 
-                // Eğer 1 saniye (1000 milisaniye) geçtiyse
-                if (elapsedTime >= 1000) {
-                    // Araç her saniyede hızının 60'da biri kadar mesafe kat eder
-                    double distanceCovered = vehicle.getSpeed() / 60.0;
-                    remainingDistance -= distanceCovered;
-                    distanceSinceLastMessage += distanceCovered;
+        while (remainingDistance > 0) {
+            double distanceCovered = vehicle.getSpeed() / 60.0;
+            remainingDistance -= distanceCovered;
+            distanceSinceLastMessage += distanceCovered;
 
-                    // Negatif kalan mesafe olmasını önlemek
-                    if (remainingDistance < 0) {
-                        remainingDistance = 0;
-                    }
-
-                    // Eğer distanceInterval'e ulaşıldıysa bildirim gönder
-                    if (distanceSinceLastMessage >= distanceInterval) {
-                        sendLocationMessage(vehicle, remainingDistance);
-                        distanceSinceLastMessage = 0; // Mesaj gönderildikten sonra sıfırla
-                    }
-
-                    lastTime = currentTime; // Zamanı güncelle
-                }
+            if (remainingDistance < 0) {
+                remainingDistance = 0;
             }
 
-            // Hedefe ulaştığında mesaj at
-            System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
+            if (distanceSinceLastMessage >= distanceInterval) {
+                sendLocationMessage(vehicle, remainingDistance);
+                distanceSinceLastMessage = 0;
+            }
+
+            if (remainingDistance > 0) {
+                try {
+                    Thread.sleep(1000); // 1 saati 1 dakikaya simüle ediyoruz
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+
+        System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }
 
     private void sendLocationMessage(Vehicle vehicle, double remainingDistance) {
@@ -77,7 +82,6 @@ public class RouteSimulator {
         return vehicles;
     }
 
-    // Zaman bilgisini formatlayan yardımcı fonksiyon
     private String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
         return formatter.format(new Date());
