@@ -1,6 +1,7 @@
 package com.gps.simulation.service;
 
 import com.gps.simulation.model.Vehicle;
+import com.gps.simulation.repositories.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,16 +19,19 @@ public class RouteSimulator {
 
     private final DistanceCalculatorService distanceCalculatorService;
     private final SimpMessagingTemplate messagingTemplate;
-    private final RandomRouteService randomRouteService;  // RandomRouteService'ten şehir alacağız
+    private final RandomRouteService randomRouteService;
+    private final VehicleRepository vehicleRepository;  // Veritabanına kaydetmek için
 
     @Autowired
     @Lazy
     private RouteSimulator self;
 
-    public RouteSimulator(DistanceCalculatorService distanceCalculatorService, SimpMessagingTemplate messagingTemplate, RandomRouteService randomRouteService) {
+    public RouteSimulator(DistanceCalculatorService distanceCalculatorService, SimpMessagingTemplate messagingTemplate,
+                          RandomRouteService randomRouteService, VehicleRepository vehicleRepository) {
         this.distanceCalculatorService = distanceCalculatorService;
         this.messagingTemplate = messagingTemplate;
         this.randomRouteService = randomRouteService;
+        this.vehicleRepository = vehicleRepository;
     }
 
     @Async("taskExecutor")
@@ -65,7 +69,7 @@ public class RouteSimulator {
             stepIndex++;  // Bir sonraki adıma geçiyoruz
 
             try {
-                Thread.sleep(1000);  // Her adımda 2 saniye gecikme (hızı yavaşlatmak için)
+                Thread.sleep(1000);  // Her adımda 1 saniye gecikme (hızı yavaşlatmak için)
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -84,6 +88,7 @@ public class RouteSimulator {
         messagingTemplate.convertAndSend("/topic/vehicleRoute/" + vehicle.getVehicleId(), routeSteps);
     }
 
+    // Güncellenmiş createVehicles fonksiyonu
     private List<Vehicle> createVehicles(int vehicleCount) {
         List<Vehicle> vehicles = new ArrayList<>();
         Random random = new Random();
@@ -93,7 +98,10 @@ public class RouteSimulator {
             int[] possibleSpeeds = {100, 110, 120};
             int speed = possibleSpeeds[random.nextInt(possibleSpeeds.length)];
 
-            vehicles.add(new Vehicle("Vehicle-" + i, speed));  // Her araç için rastgele bir hız atanıyor
+            Vehicle vehicle = new Vehicle(speed);  // Vehicle nesnesi oluştur
+            vehicleRepository.save(vehicle);  // Veritabanına kaydet
+
+            vehicles.add(vehicle);  // Listeye ekle
         }
 
         return vehicles;

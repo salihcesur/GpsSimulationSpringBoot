@@ -16,13 +16,12 @@ public class Vehicle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String vehicleId;
+    private Long vehicleId;
     private int speed;  // Hız
     private double currentLatitude;
     private double currentLongitude;
 
-    public Vehicle(String vehicleId, int speed) {
-        this.vehicleId = vehicleId;
+    public Vehicle( int speed) {
         this.speed = speed;
     }
 }
