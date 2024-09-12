@@ -21,5 +21,4 @@ public class VehicleController {
         routeSimulator.simulateJourney(vehicleCount, distanceInterval); // Asenkron çalışır
         return "Simülasyon başlatıldı, araç sayısı: " + vehicleCount + " Mesaj gönderim aralığı: " + distanceInterval + " km";
     }
-
 }

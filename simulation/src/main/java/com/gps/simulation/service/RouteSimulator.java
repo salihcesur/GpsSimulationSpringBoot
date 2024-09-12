@@ -3,85 +3,102 @@ package com.gps.simulation.service;
 import com.gps.simulation.model.Vehicle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 @Service
-@EnableAsync
 public class RouteSimulator {
 
     private final DistanceCalculatorService distanceCalculatorService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final RandomRouteService randomRouteService;  // RandomRouteService'ten şehir alacağız
 
     @Autowired
     @Lazy
     private RouteSimulator self;
 
-    public RouteSimulator(DistanceCalculatorService distanceCalculatorService) {
+    public RouteSimulator(DistanceCalculatorService distanceCalculatorService, SimpMessagingTemplate messagingTemplate, RandomRouteService randomRouteService) {
         this.distanceCalculatorService = distanceCalculatorService;
+        this.messagingTemplate = messagingTemplate;
+        this.randomRouteService = randomRouteService;
     }
 
     @Async("taskExecutor")
     public void simulateJourney(int vehicleCount, int distanceInterval) {
-        double totalDistance = distanceCalculatorService.getRoadDistance("Istanbul", "Erzincan");
-        List<Vehicle> vehicles = createVehicles(vehicleCount, totalDistance);
+        List<Vehicle> vehicles = createVehicles(vehicleCount);  // Araçları oluştur
 
         for (Vehicle vehicle : vehicles) {
-            self.simulateVehicleJourney(vehicle, totalDistance, distanceInterval); // self ile asenkron simülasyon
+            // RandomRouteService üzerinden rastgele şehirleri al
+            String[] cities = randomRouteService.getRandomCities();
+            // Rastgele şehirler arası rotayı al
+            List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
+            // Asenkron olarak araç yolculuğunu simüle et
+            self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
     }
 
     @Async("taskExecutor")
-    public void simulateVehicleJourney(Vehicle vehicle, double totalDistance, int distanceInterval) {
-        double remainingDistance = totalDistance;
-        double distanceSinceLastMessage = 0;
+    public void simulateVehicleJourney(Vehicle vehicle, List<double[]> routeSteps, int distanceInterval) {
+        int stepIndex = 0;  // Rota adımları boyunca ilerleyecek
 
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() +
-                " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı. Toplam mesafe: " + totalDistance + " km.");
+                " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı.");
 
-        while (remainingDistance > 0) {
-            double distanceCovered = (vehicle.getSpeed() / 60.0) ;
-            remainingDistance -= distanceCovered;
-            distanceSinceLastMessage += distanceCovered;
+        // Araç rotası için harita üzerinde polyline çizmek için rotayı WebSocket ile gönder
+        sendRouteToFrontend(vehicle, routeSteps);
 
-            if (remainingDistance < 0) {
-                remainingDistance = 0;
-            }
+        while (stepIndex < routeSteps.size()) {
+            double[] currentStep = routeSteps.get(stepIndex);  // Her adımda enlem ve boylam bilgisi alınıyor
+            vehicle.setCurrentLatitude(currentStep[0]);
+            vehicle.setCurrentLongitude(currentStep[1]);
 
-            if (Math.abs(distanceSinceLastMessage - distanceInterval) < 0.001) {
-                sendLocationMessage(vehicle, remainingDistance);
-                distanceSinceLastMessage = 0;
-            }
+            // WebSocket ile konum bilgilerini frontend'e gönder
+            sendLocationMessage(vehicle);
 
+            stepIndex++;  // Bir sonraki adıma geçiyoruz
 
-            if (remainingDistance > 0) {
-                try {
-                    Thread.sleep(500); // 1 saati 1 dakikaya simüle ediyoruz
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                Thread.sleep(1000);  // Her adımda 2 saniye gecikme (hızı yavaşlatmak için)
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }
 
-    private void sendLocationMessage(Vehicle vehicle, double remainingDistance) {
-        System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() +
-                " şu an Hız: " + vehicle.getSpeed() + " km/h, Kalan km: " + remainingDistance);
+    // WebSocket ile araç konumunu frontend'e gönderme
+    private void sendLocationMessage(Vehicle vehicle) {
+        messagingTemplate.convertAndSend("/topic/vehicleLocation", vehicle);  // Frontend'deki WebSocket adresiyle eşleşmeli
     }
 
-    private List<Vehicle> createVehicles(int vehicleCount, double totalDistance) {
+    // WebSocket ile araç rotasını frontend'e gönderme
+    private void sendRouteToFrontend(Vehicle vehicle, List<double[]> routeSteps) {
+        messagingTemplate.convertAndSend("/topic/vehicleRoute/" + vehicle.getVehicleId(), routeSteps);
+    }
+
+    private List<Vehicle> createVehicles(int vehicleCount) {
         List<Vehicle> vehicles = new ArrayList<>();
+        Random random = new Random();
+
         for (int i = 1; i <= vehicleCount; i++) {
-            vehicles.add(new Vehicle("Vehicle-" + i, totalDistance));
+            // Rastgele bir hız belirle (örneğin 100, 110, 120 km/h)
+            int[] possibleSpeeds = {100, 110, 120};
+            int speed = possibleSpeeds[random.nextInt(possibleSpeeds.length)];
+
+            vehicles.add(new Vehicle("Vehicle-" + i, speed));  // Her araç için rastgele bir hız atanıyor
         }
+
         return vehicles;
     }
+
 
     private String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");

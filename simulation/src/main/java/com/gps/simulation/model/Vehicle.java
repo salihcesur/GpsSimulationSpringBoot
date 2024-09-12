@@ -16,24 +16,13 @@ public class Vehicle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     private String vehicleId;
-
-    private double totalDistance;
-
+    private int speed;  // Hız
     private double currentLatitude;
-
     private double currentLongitude;
 
-    private double remainingKm;
-
-    private int speed;
-
-    public Vehicle(String vehicleId, double totalDistance) {
+    public Vehicle(String vehicleId, int speed) {
         this.vehicleId = vehicleId;
-        this.totalDistance = totalDistance;
-        this.speed = new int[]{100,300,200}[new java.util.Random().nextInt(3)];
-        this.remainingKm = totalDistance;
+        this.speed = speed;
     }
 }
