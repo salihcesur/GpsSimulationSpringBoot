@@ -1,10 +1,10 @@
 package com.gps.simulation.service;
 
+import com.gps.simulation.kafka.VehicleProducerService;
 import com.gps.simulation.model.Vehicle;
 import com.gps.simulation.repositories.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -18,20 +18,20 @@ import java.util.Random;
 public class RouteSimulator {
 
     private final DistanceCalculatorService distanceCalculatorService;
-    private final SimpMessagingTemplate messagingTemplate;
-    private final RandomRouteService randomRouteService;
-    private final VehicleRepository vehicleRepository;  // Veritabanına kaydetmek için
+    private final VehicleRepository vehicleRepository;
+    private final VehicleProducerService vehicleProducerService;  // Kafka producer servisi
+    private final RandomRouteService randomRouteService;  // RandomRouteService entegrasyonu
 
     @Autowired
     @Lazy
     private RouteSimulator self;
 
-    public RouteSimulator(DistanceCalculatorService distanceCalculatorService, SimpMessagingTemplate messagingTemplate,
-                          RandomRouteService randomRouteService, VehicleRepository vehicleRepository) {
+    public RouteSimulator(DistanceCalculatorService distanceCalculatorService, VehicleRepository vehicleRepository,
+                          VehicleProducerService vehicleProducerService, RandomRouteService randomRouteService) {
         this.distanceCalculatorService = distanceCalculatorService;
-        this.messagingTemplate = messagingTemplate;
-        this.randomRouteService = randomRouteService;
         this.vehicleRepository = vehicleRepository;
+        this.vehicleProducerService = vehicleProducerService;  // Kafka producer servisi
+        this.randomRouteService = randomRouteService;  // RandomRouteService kullanımı
     }
 
     @Async("taskExecutor")
@@ -39,32 +39,29 @@ public class RouteSimulator {
         List<Vehicle> vehicles = createVehicles(vehicleCount);  // Araçları oluştur
 
         for (Vehicle vehicle : vehicles) {
-            String[] cities = randomRouteService.getRandomCities();
+            String[] cities = randomRouteService.getRandomCities(); // Random rotaları al
             List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
+
     }
 
     @Async("taskExecutor")
     public void simulateVehicleJourney(Vehicle vehicle, List<double[]> routeSteps, int distanceInterval) {
-        int stepIndex = 0;  // Rota adımları boyunca ilerleyecek
-
-        System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() +
-                " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı.");
-
-        sendRouteToFrontend(vehicle, routeSteps);
+        int stepIndex = 0;
 
         while (stepIndex < routeSteps.size()) {
             double[] currentStep = routeSteps.get(stepIndex);
             vehicle.setCurrentLatitude(currentStep[0]);
             vehicle.setCurrentLongitude(currentStep[1]);
 
-            sendLocationMessage(vehicle);
+            // Kafka'ya araç verilerini gönder
+            vehicleProducerService.sendVehicleData(vehicle);
 
             stepIndex++;
 
             try {
-                Thread.sleep(1000);  // Her adımda 1 saniye gecikme (hızı yavaşlatmak için)
+                Thread.sleep(  distanceInterval + 1000L);  // Gecikmeyi mesafeye göre ayarla (dinamik gecikme)
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -73,35 +70,23 @@ public class RouteSimulator {
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }
 
-    // WebSocket ile araç konumunu frontend'e gönderme
-    private void sendLocationMessage(Vehicle vehicle) {
-        messagingTemplate.convertAndSend("/topic/vehicleLocation", vehicle);  // Frontend'deki WebSocket adresiyle eşleşmeli
-    }
-
-    // WebSocket ile araç rotasını frontend'e gönderme
-    private void sendRouteToFrontend(Vehicle vehicle, List<double[]> routeSteps) {
-        messagingTemplate.convertAndSend("/topic/vehicleRoute/" + vehicle.getVehicleId(), routeSteps);
-    }
-
-    // Güncellenmiş createVehicles fonksiyonu
+    // Araçları oluştur
     private List<Vehicle> createVehicles(int vehicleCount) {
         List<Vehicle> vehicles = new ArrayList<>();
         Random random = new Random();
 
         for (int i = 1; i <= vehicleCount; i++) {
-            // Rastgele bir hız belirle (örneğin 100, 110, 120 km/h)
             int[] possibleSpeeds = {100, 110, 120};
             int speed = possibleSpeeds[random.nextInt(possibleSpeeds.length)];
 
-            Vehicle vehicle = new Vehicle(speed);  // Vehicle nesnesi oluştur
+            Vehicle vehicle = new Vehicle(speed);  // Araç nesnesi oluştur
             vehicleRepository.save(vehicle);  // Veritabanına kaydet
 
-            vehicles.add(vehicle);  // Listeye ekle
+            vehicles.add(vehicle);
         }
 
         return vehicles;
     }
-
 
     private String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");

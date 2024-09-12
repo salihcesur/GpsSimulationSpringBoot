@@ -18,7 +18,9 @@ public class VehicleController {
 
     @PostMapping("/start")
     public String startSimulation(@RequestParam int vehicleCount, @RequestParam int distanceInterval) {
-        routeSimulator.simulateJourney(vehicleCount, distanceInterval); // Asenkron çalışır
+        // Simülasyon başlat
+        routeSimulator.simulateJourney(vehicleCount, distanceInterval);
+
         return "Simülasyon başlatıldı, araç sayısı: " + vehicleCount + " Mesaj gönderim aralığı: " + distanceInterval + " km";
     }
 }
