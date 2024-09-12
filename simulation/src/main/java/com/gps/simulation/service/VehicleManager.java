@@ -20,6 +20,5 @@ public class VehicleManager {
     public void updateVehiclePosition(Vehicle vehicle, double newLatitude, double newLongitude) {
         vehicle.setCurrentLatitude(newLatitude);
         vehicle.setCurrentLongitude(newLongitude);
-        // Diğer güncellemeler
     }
 }

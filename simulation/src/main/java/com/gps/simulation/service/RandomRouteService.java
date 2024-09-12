@@ -19,27 +19,19 @@ public class RandomRouteService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    // Rastgele şehir seçimi
     public String[] getRandomCities() {
         String[] cities = {"Istanbul", "Ankara", "Izmir", "Erzurum", "Antalya", "Trabzon", "Gaziantep", "Diyarbakir"};
 
         Random random = new Random();
         String origin = cities[random.nextInt(cities.length)];
-        String destination = cities[random.nextInt(cities.length)];
+        String destination;
 
-        // Eğer aynı şehir seçildiyse farklı bir destinasyon al
-        while (origin.equals(destination)) {
+        // Varış şehrinin farklı olduğundan emin olmak için bir döngü
+        do {
             destination = cities[random.nextInt(cities.length)];
-        }
+        } while (origin.equals(destination));
 
         return new String[]{origin, destination};
     }
 
-    // Rastgele rotayı Google Directions API ile al ve frontend'e gönder
-    @Async("taskExecutor")
-    public void sendRandomRouteToFrontend() {
-        String[] cities = getRandomCities();
-        List<double[]> randomRoute = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);  // Rastgele şehirler arası rota
-        messagingTemplate.convertAndSend("/topic/randomRoute", randomRoute);  // Frontend'e WebSocket ile gönder
-    }
 }

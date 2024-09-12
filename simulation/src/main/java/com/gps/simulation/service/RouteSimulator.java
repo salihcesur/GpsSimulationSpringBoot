@@ -39,11 +39,8 @@ public class RouteSimulator {
         List<Vehicle> vehicles = createVehicles(vehicleCount);  // Araçları oluştur
 
         for (Vehicle vehicle : vehicles) {
-            // RandomRouteService üzerinden rastgele şehirleri al
             String[] cities = randomRouteService.getRandomCities();
-            // Rastgele şehirler arası rotayı al
             List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
-            // Asenkron olarak araç yolculuğunu simüle et
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
     }
@@ -55,18 +52,16 @@ public class RouteSimulator {
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() +
                 " hız: " + vehicle.getSpeed() + " km/h ile yolculuğa başladı.");
 
-        // Araç rotası için harita üzerinde polyline çizmek için rotayı WebSocket ile gönder
         sendRouteToFrontend(vehicle, routeSteps);
 
         while (stepIndex < routeSteps.size()) {
-            double[] currentStep = routeSteps.get(stepIndex);  // Her adımda enlem ve boylam bilgisi alınıyor
+            double[] currentStep = routeSteps.get(stepIndex);
             vehicle.setCurrentLatitude(currentStep[0]);
             vehicle.setCurrentLongitude(currentStep[1]);
 
-            // WebSocket ile konum bilgilerini frontend'e gönder
             sendLocationMessage(vehicle);
 
-            stepIndex++;  // Bir sonraki adıma geçiyoruz
+            stepIndex++;
 
             try {
                 Thread.sleep(1000);  // Her adımda 1 saniye gecikme (hızı yavaşlatmak için)
