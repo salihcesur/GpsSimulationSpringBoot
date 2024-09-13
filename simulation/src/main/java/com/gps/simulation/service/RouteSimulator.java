@@ -61,7 +61,7 @@ public class RouteSimulator {
             stepIndex++;
 
             try {
-                Thread.sleep(  distanceInterval + 1000L);  // Gecikmeyi mesafeye göre ayarla (dinamik gecikme)
+                Thread.sleep(  30000 / distanceInterval );  // Gecikmeyi mesafeye göre ayarla (dinamik gecikme)
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

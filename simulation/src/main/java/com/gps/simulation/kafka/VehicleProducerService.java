@@ -3,12 +3,7 @@ package com.gps.simulation.kafka;
 import com.gps.simulation.model.Vehicle;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-
-import com.gps.simulation.model.Vehicle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
 
 @Service
 public class VehicleProducerService {
