@@ -7,12 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 @Service
 public class RouteSimulator {
@@ -49,35 +47,56 @@ public class RouteSimulator {
     @Async("taskExecutor")
     public void simulateVehicleJourney(Vehicle vehicle, List<double[]> routeSteps, int distanceInterval) {
         int stepIndex = 0;
+        double totalDistance = 0;  // Toplam mesafeyi takip eden değişken
+        double remainingDistanceToNotify = distanceInterval;  // Bildirim için kalan mesafe
 
         while (stepIndex < routeSteps.size()) {
             double[] currentStep = routeSteps.get(stepIndex);
+            double[] nextStep = stepIndex + 1 < routeSteps.size() ? routeSteps.get(stepIndex + 1) : null;
+
+            // Şu anki adımın enlem ve boylamını araca set et
             vehicle.setCurrentLatitude(currentStep[0]);
             vehicle.setCurrentLongitude(currentStep[1]);
 
-            // Kafka'ya araç verilerini gönder
-            vehicleProducerService.sendVehicleData(vehicle);
+            // Sonraki adım varsa, iki adım arasındaki mesafeyi hesapla
+            if (nextStep != null) {
+                double distance = distanceCalculatorService.calculateDistance(currentStep, nextStep);  // Mesafe hesaplamayı service'den yap
+                totalDistance += distance;  // Toplam mesafeyi güncelle
+                remainingDistanceToNotify -= distance;  // Kalan bildirime kadar olan mesafeyi düş
+
+                // Eğer kalan mesafe `0` veya altına düştüyse bildirim gönder
+                if (remainingDistanceToNotify <= 0) {
+                    vehicleProducerService.sendVehicleData(vehicle);  // Kafka'ya araç verilerini gönder
+
+                    System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " " + distanceInterval + " km yol aldı.");
+
+                    // Kalan mesafeyi tekrar `distanceInterval` kadar artır (bir sonraki bildirim için)
+                    remainingDistanceToNotify += distanceInterval;  // Sadece tamamlanmış mesafeyi resetle
+                }
+            }
 
             stepIndex++;
 
             try {
-                Thread.sleep(  30000 / distanceInterval );  // Gecikmeyi mesafeye göre ayarla (dinamik gecikme)
+                Thread.sleep(30000 / distanceInterval);  // Gecikmeyi mesafeye göre ayarla (dinamik gecikme)
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
+        // Hedefe ulaştığında aracın konumunu ve durumunu güncelle
+        vehicle.setCompleted(true);  // Aracın hedefe ulaştığını işaretleyin
+        vehicleProducerService.sendVehicleData(vehicle);  // Kafka'ya araç verilerini gönder
+
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }
 
-    // Araçları oluştur
+
     private List<Vehicle> createVehicles(int vehicleCount) {
         List<Vehicle> vehicles = new ArrayList<>();
-        Random random = new Random();
 
         for (int i = 1; i <= vehicleCount; i++) {
-            int[] possibleSpeeds = {100, 110, 120};
-            int speed = possibleSpeeds[random.nextInt(possibleSpeeds.length)];
+            int speed = 120;
 
             Vehicle vehicle = new Vehicle(speed);  // Araç nesnesi oluştur
             vehicleRepository.save(vehicle);  // Veritabanına kaydet

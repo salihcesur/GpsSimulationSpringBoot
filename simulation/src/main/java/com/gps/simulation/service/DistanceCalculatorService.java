@@ -16,6 +16,18 @@ public class DistanceCalculatorService {
     @Value("${google.api.key}")
     private String apiKey;
 
+    // İki nokta arasındaki mesafeyi hesaplayan metod
+    public double calculateDistance(double[] start, double[] end) {
+        final int R = 6371; // Dünya'nın yarıçapı (km cinsinden)
+        double latDistance = Math.toRadians(end[0] - start[0]);
+        double lngDistance = Math.toRadians(end[1] - start[1]);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(start[0])) * Math.cos(Math.toRadians(end[0]))
+                * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // İki nokta arasındaki mesafe (km)
+    }
+
     // İki şehir arasındaki rotayı almak için kullanılacak metod
     public List<double[]> getRouteSteps(String origin, String destination) {
         // Google Directions API'den rota adımlarını al

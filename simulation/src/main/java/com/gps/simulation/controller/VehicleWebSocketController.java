@@ -17,7 +17,7 @@ public class VehicleWebSocketController {
         this.vehicleManager = vehicleManager;
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 100)
     public void sendVehicleLocation() {
         for (Vehicle vehicle : vehicleManager.getVehicles()) { // Tüm araçlar için konum bilgilerini gönder
             messagingTemplate.convertAndSend("/topic/vehicleLocation", vehicle);

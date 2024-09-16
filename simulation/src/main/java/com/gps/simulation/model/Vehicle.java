@@ -20,6 +20,7 @@ public class Vehicle {
     private int speed;  // Hız
     private double currentLatitude;
     private double currentLongitude;
+    private boolean completed;
 
     public Vehicle( int speed) {
         this.speed = speed;

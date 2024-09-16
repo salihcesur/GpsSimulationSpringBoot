@@ -33,5 +33,4 @@ public class RandomRouteService {
 
         return new String[]{origin, destination};
     }
-
 }
