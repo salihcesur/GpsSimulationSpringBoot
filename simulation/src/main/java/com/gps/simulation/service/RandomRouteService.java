@@ -26,7 +26,6 @@ public class RandomRouteService {
         String origin = cities[random.nextInt(cities.length)];
         String destination;
 
-        // Varış şehrinin farklı olduğundan emin olmak için bir döngü
         do {
             destination = cities[random.nextInt(cities.length)];
         } while (origin.equals(destination));

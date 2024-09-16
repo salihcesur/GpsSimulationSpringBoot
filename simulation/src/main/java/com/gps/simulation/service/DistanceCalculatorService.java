@@ -16,21 +16,18 @@ public class DistanceCalculatorService {
     @Value("${google.api.key}")
     private String apiKey;
 
-    // İki nokta arasındaki mesafeyi hesaplayan metod
     public double calculateDistance(double[] start, double[] end) {
-        final int R = 6371; // Dünya'nın yarıçapı (km cinsinden)
+        final int R = 6371;
         double latDistance = Math.toRadians(end[0] - start[0]);
         double lngDistance = Math.toRadians(end[1] - start[1]);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(start[0])) * Math.cos(Math.toRadians(end[0]))
                 * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // İki nokta arasındaki mesafe (km)
+        return R * c;
     }
 
-    // İki şehir arasındaki rotayı almak için kullanılacak metod
     public List<double[]> getRouteSteps(String origin, String destination) {
-        // Google Directions API'den rota adımlarını al
         String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + apiKey;
         RestTemplate restTemplate = new RestTemplate();
         String response = restTemplate.getForObject(url, String.class);
@@ -45,7 +42,6 @@ public class DistanceCalculatorService {
 
         List<double[]> routeSteps = new ArrayList<>();
 
-        // Her bir adımda enlem ve boylam bilgilerini al
         for (int i = 0; i < steps.length(); i++) {
             JSONObject step = steps.getJSONObject(i);
             double startLat = step.getJSONObject("start_location").getDouble("lat");
@@ -53,6 +49,6 @@ public class DistanceCalculatorService {
             routeSteps.add(new double[]{startLat, startLng});
         }
 
-        return routeSteps;  // Enlem ve boylam çiftlerinden oluşan rota adımları
+        return routeSteps; 
     }
 }

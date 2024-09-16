@@ -14,18 +14,16 @@ public class VehicleKafkaConsumer {
 
     public VehicleKafkaConsumer(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
-        this.objectMapper = new ObjectMapper(); // JSON dönüşümü için ObjectMapper
+        this.objectMapper = new ObjectMapper();
     }
 
     @KafkaListener(topics = "vehicle_data", groupId = "vehicle_group")
     public void consumeVehicleData(String vehicleMessage) {
         try {
-            // Kafka mesajını Vehicle nesnesine dönüştür
             Vehicle vehicle = objectMapper.readValue(vehicleMessage, Vehicle.class);
-
-            // WebSocket üzerinden araca ait bilgiyi frontend'e ilet
             messagingTemplate.convertAndSend("/topic/vehicleLocation", vehicle);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Araç verisi işlenirken hata oluştu", e);
         }
     }

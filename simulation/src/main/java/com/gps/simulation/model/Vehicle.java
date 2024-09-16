@@ -17,7 +17,7 @@ public class Vehicle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long vehicleId;
-    private int speed;  // Hız
+    private int speed;
     private double currentLatitude;
     private double currentLongitude;
     private boolean completed;
