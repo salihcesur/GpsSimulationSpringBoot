@@ -41,7 +41,6 @@ public class RouteSimulator {
             List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
-
     }
 
     @Async("taskExecutor")
@@ -102,3 +101,4 @@ public class RouteSimulator {
         return formatter.format(new Date());
     }
 }
+

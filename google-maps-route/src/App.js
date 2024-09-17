@@ -14,9 +14,9 @@ const initialCenter = {
 };
 
 const iconWithLabel = (color) => ({
-  url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`, // İkon rengi (kırmızı veya yeşil)
-  labelOrigin: new window.google.maps.Point(15, 35), // Yazıyı marker'ın üzerine kaydırır
-  scaledSize: new window.google.maps.Size(32, 32),   // İkon boyutunu ayarlayın
+  url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`, 
+  labelOrigin: new window.google.maps.Point(15, 35),
+  scaledSize: new window.google.maps.Size(32, 32),
 });
 
 const App = () => {
@@ -34,10 +34,8 @@ const App = () => {
           const existingVehicle = prevVehicles.find(v => v.vehicleId === vehicle.vehicleId);
 
           if (existingVehicle) {
-            // Araç mevcutsa güncelle
             return prevVehicles.map(v => v.vehicleId === vehicle.vehicleId ? vehicle : v);
           } else {
-            // Yeni araç ekle
             return [...prevVehicles, vehicle];
           }
         });
@@ -51,7 +49,6 @@ const App = () => {
     };
   }, []);
 
-  // Araç yerine ulaştığında `completed` durumunu güncelle ve marker'ı yeşil yap
   useEffect(() => {
     vehicles.forEach(vehicle => {
       if (!vehicle.completed && vehicle.remainingKm === 0) {
@@ -61,7 +58,7 @@ const App = () => {
               v.vehicleId === vehicle.vehicleId ? { ...v, completed: true } : v
             )
           );
-        }, 2000); // 2 saniye sonra completed olarak işaretle
+        }, 2000);
       }
     });
   }, [vehicles]);
@@ -81,12 +78,12 @@ const App = () => {
               text: vehicle.vehicleId ? String(vehicle.vehicleId) : "Unknown",
               fontSize: "14px",
               fontWeight: "bold",
-              color: "black", // ID yazı rengi beyaz yapıldı
+              color: "black",
             }}
             icon={
               vehicle.completed
-                ? iconWithLabel('green') // Yeşil marker
-                : iconWithLabel('red')   // Kırmızı marker
+                ? iconWithLabel('green') 
+                : iconWithLabel('red')
             }
           />
         ))}
