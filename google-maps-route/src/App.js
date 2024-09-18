@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from "@react-google-maps/api";
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
@@ -8,19 +8,45 @@ const mapContainerStyle = {
   height: "500px",
 };
 
+// Türkiye'nin merkez koordinatları
 const initialCenter = {
-  lat: 39.9334, 
+  lat: 39.9334,
   lng: 32.8597,
 };
 
+// Haritanın başlangıçtaki sabit zoom seviyesi
+const defaultZoom = 6;
+
 const iconWithLabel = (color) => ({
-  url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`, 
+  url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
   labelOrigin: new window.google.maps.Point(15, 35),
   scaledSize: new window.google.maps.Size(32, 32),
 });
 
 const App = () => {
   const [vehicles, setVehicles] = useState([]);
+  const [routes, setRoutes] = useState({});
+
+  const calculateRoute = (vehicle) => {
+    const directionsService = new window.google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: { lat: vehicle.startLatitude, lng: vehicle.startLongitude },
+        destination: { lat: vehicle.destinationLatitude, lng: vehicle.destinationLongitude },
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setRoutes((prevRoutes) => ({
+            ...prevRoutes,
+            [vehicle.vehicleId]: result,
+          }));
+        } else {
+          console.error(`Rota hesaplama hatası: ${status}`);
+        }
+      }
+    );
+  };
 
   useEffect(() => {
     const socket = new SockJS("http://localhost:8081/ws");
@@ -50,15 +76,25 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    vehicles.forEach(vehicle => {
-      if (!vehicle.completed && vehicle.remainingKm === 0) {
-        setTimeout(() => {
-          setVehicles((prevVehicles) =>
-            prevVehicles.map(v =>
-              v.vehicleId === vehicle.vehicleId ? { ...v, completed: true } : v
-            )
-          );
-        }, 2000);
+    vehicles.forEach((vehicle) => {
+      if (!vehicle.completed && !routes[vehicle.vehicleId]) {
+        calculateRoute(vehicle);
+      }
+    });
+  }, [vehicles, routes]);
+
+  const clearRoute = (vehicleId) => {
+    setRoutes((prevRoutes) => {
+      const newRoutes = { ...prevRoutes };
+      delete newRoutes[vehicleId];
+      return newRoutes;
+    });
+  };
+
+  useEffect(() => {
+    vehicles.forEach((vehicle) => {
+      if (vehicle.completed) {
+        clearRoute(vehicle.vehicleId);
       }
     });
   }, [vehicles]);
@@ -67,8 +103,12 @@ const App = () => {
     <LoadScript googleMapsApiKey="AIzaSyAoyH2S0s-LqCrGKcFmF4lmV06_mwKlKK8">
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        zoom={6}
-        center={initialCenter}
+        zoom={defaultZoom} // Zoom seviyesini sabitliyoruz
+        center={initialCenter} // Haritanın merkezini Türkiye'ye sabitliyoruz
+        options={{
+          disableDefaultUI: true, // Harita kontrollerini gizle (isteğe bağlı)
+          zoomControl: true, // Sadece zoom kontrolü aktif
+        }}
       >
         {vehicles.map((vehicle) => (
           <Marker
@@ -82,9 +122,20 @@ const App = () => {
             }}
             icon={
               vehicle.completed
-                ? iconWithLabel('green') 
+                ? iconWithLabel('green')
                 : iconWithLabel('red')
             }
+          />
+        ))}
+
+        {Object.keys(routes).map((vehicleId) => (
+          <DirectionsRenderer
+            key={vehicleId}
+            directions={routes[vehicleId]}
+            options={{ 
+              suppressMarkers: true, 
+              preserveViewport: true  // Viewport'u koruyoruz, böylece harita yakınlaşmaz
+            }}
           />
         ))}
       </GoogleMap>

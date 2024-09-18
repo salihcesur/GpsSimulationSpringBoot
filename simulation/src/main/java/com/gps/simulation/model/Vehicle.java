@@ -22,7 +22,13 @@ public class Vehicle {
     private double currentLongitude;
     private boolean completed;
 
-    public Vehicle( int speed) {
+    // Yeni alanlar
+    private double startLatitude;
+    private double startLongitude;
+    private double destinationLatitude;
+    private double destinationLongitude;
+
+    public Vehicle(int speed) {
         this.speed = speed;
     }
 }

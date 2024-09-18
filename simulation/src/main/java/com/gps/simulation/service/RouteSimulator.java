@@ -39,9 +39,20 @@ public class RouteSimulator {
         for (Vehicle vehicle : vehicles) {
             String[] cities = randomRouteService.getRandomCities();
             List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
+
+            // İlk adım başlangıç noktası, son adım bitiş noktası
+            double[] startPoint = routeSteps.get(0);
+            double[] endPoint = routeSteps.get(routeSteps.size() - 1);
+
+            vehicle.setStartLatitude(startPoint[0]);
+            vehicle.setStartLongitude(startPoint[1]);
+            vehicle.setDestinationLatitude(endPoint[0]);
+            vehicle.setDestinationLongitude(endPoint[1]);
+
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
     }
+
 
     @Async("taskExecutor")
     public void simulateVehicleJourney(Vehicle vehicle, List<double[]> routeSteps, int distanceInterval) {
@@ -52,7 +63,7 @@ public class RouteSimulator {
         double timeToTravelOneKm = 3600 / speedKmPerHour;
 
         double simulationSpeedFactor = 3600.0 / 5.0;
-        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 1000);
+        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 2000);
 
         while (stepIndex < routeSteps.size()) {
             double[] currentStep = routeSteps.get(stepIndex);
