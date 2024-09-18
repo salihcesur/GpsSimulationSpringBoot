@@ -34,7 +34,7 @@ public class RouteSimulator {
 
     @Async("taskExecutor")
     public void simulateJourney(int vehicleCount, int distanceInterval) {
-        List<Vehicle> vehicles = vehicleManager.createVehicles(vehicleCount);  // VehicleManager'dan çağırıyoruz
+        List<Vehicle> vehicles = vehicleManager.createVehicles(vehicleCount);
 
         for (Vehicle vehicle : vehicles) {
             String[] cities = randomRouteService.getRandomCities();
@@ -49,11 +49,10 @@ public class RouteSimulator {
         double totalDistance = 0;
         double remainingDistanceToNotify = distanceInterval;
         double speedKmPerHour = 120;
-        double timeToTravelOneKm = 3600 / speedKmPerHour;  // 1 km gitmek için gerçek süre (saniye cinsinden)
+        double timeToTravelOneKm = 3600 / speedKmPerHour;
 
-        // Gerçek dünyadaki 1 saat = 5 saniye simülasyon olacak şekilde hızlandırma faktörü
-        double simulationSpeedFactor = 3600.0 / 5.0; // 720 kat hızlandırma
-        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 1000); // Sleep süresi milisaniye cinsinden
+        double simulationSpeedFactor = 3600.0 / 5.0;
+        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 1000);
 
         while (stepIndex < routeSteps.size()) {
             double[] currentStep = routeSteps.get(stepIndex);
@@ -73,7 +72,6 @@ public class RouteSimulator {
                     remainingDistanceToNotify += distanceInterval;
                 }
 
-                // Hızlandırılmış simülasyon için bekleme süresi
                 try {
                     Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
@@ -88,11 +86,8 @@ public class RouteSimulator {
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }
 
-
-
     private String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
         return formatter.format(new Date());
     }
 }
-

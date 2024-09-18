@@ -9,8 +9,8 @@ const mapContainerStyle = {
 };
 
 const initialCenter = {
-  lat: 39.9334, // Türkiye'nin merkezi
-  lng: 32.8597, // Türkiye'nin merkezi
+  lat: 39.9334, 
+  lng: 32.8597,
 };
 
 const iconWithLabel = (color) => ({
