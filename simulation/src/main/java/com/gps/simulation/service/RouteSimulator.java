@@ -1,6 +1,7 @@
 package com.gps.simulation.service;
 
 import com.gps.simulation.kafka.VehicleProducerService;
+import com.gps.simulation.model.Status;
 import com.gps.simulation.model.Vehicle;
 import com.gps.simulation.repositories.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,9 @@ public class RouteSimulator {
             vehicle.setDestinationLatitude(endPoint[0]);
             vehicle.setDestinationLongitude(endPoint[1]);
 
+            vehicle.setStatus(Status.READY);
+            vehicleProducerService.sendVehicleData(vehicle);
+
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
     }
@@ -62,8 +66,8 @@ public class RouteSimulator {
         double speedKmPerHour = 120;
         double timeToTravelOneKm = 3600 / speedKmPerHour;
 
-        double simulationSpeedFactor = 3600.0 / 5.0;
-        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 2000);
+        double simulationSpeedFactor = 3600.0 / 30.0;
+        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 1000);
 
         while (stepIndex < routeSteps.size()) {
             double[] currentStep = routeSteps.get(stepIndex);
@@ -92,7 +96,7 @@ public class RouteSimulator {
             stepIndex++;
         }
 
-        vehicle.setCompleted(true);
+        vehicle.setStatus(Status.COMPLETED);
         vehicleProducerService.sendVehicleData(vehicle);
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }

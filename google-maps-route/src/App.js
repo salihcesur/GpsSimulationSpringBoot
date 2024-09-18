@@ -27,6 +27,7 @@ const App = () => {
   const [vehicles, setVehicles] = useState([]);
   const [routes, setRoutes] = useState({});
 
+  // Araç için rota hesaplayın
   const calculateRoute = (vehicle) => {
     const directionsService = new window.google.maps.DirectionsService();
     directionsService.route(
@@ -48,6 +49,7 @@ const App = () => {
     );
   };
 
+  // WebSocket ile araç verilerini alın
   useEffect(() => {
     const socket = new SockJS("http://localhost:8081/ws");
     const stompClient = Stomp.over(socket);
@@ -75,14 +77,16 @@ const App = () => {
     };
   }, []);
 
+  // Araç READY durumunda ise rota hesapla
   useEffect(() => {
     vehicles.forEach((vehicle) => {
-      if (!vehicle.completed && !routes[vehicle.vehicleId]) {
-        calculateRoute(vehicle);
+      if (vehicle.status === "READY" && !routes[vehicle.vehicleId]) {
+        calculateRoute(vehicle); // READY durumundaki araç için rota hesapla
       }
     });
   }, [vehicles, routes]);
 
+  // Rota temizleme fonksiyonu
   const clearRoute = (vehicleId) => {
     setRoutes((prevRoutes) => {
       const newRoutes = { ...prevRoutes };
@@ -91,10 +95,11 @@ const App = () => {
     });
   };
 
+  // Araç COMPLETED durumunda rotayı kaldır
   useEffect(() => {
     vehicles.forEach((vehicle) => {
-      if (vehicle.completed) {
-        clearRoute(vehicle.vehicleId);
+      if (vehicle.status === "COMPLETED") {
+        clearRoute(vehicle.vehicleId); // COMPLETED olan aracın rotasını kaldır
       }
     });
   }, [vehicles]);
@@ -106,8 +111,9 @@ const App = () => {
         zoom={defaultZoom} // Zoom seviyesini sabitliyoruz
         center={initialCenter} // Haritanın merkezini Türkiye'ye sabitliyoruz
         options={{
-          disableDefaultUI: true, // Harita kontrollerini gizle (isteğe bağlı)
+          disableDefaultUI: true, // Varsayılan harita kontrollerini gizle
           zoomControl: true, // Sadece zoom kontrolü aktif
+          fullscreenControl: true, // Tam ekran kontrolünü geri getir
         }}
       >
         {vehicles.map((vehicle) => (
@@ -121,7 +127,7 @@ const App = () => {
               color: "black",
             }}
             icon={
-              vehicle.completed
+              vehicle.status === "COMPLETED"
                 ? iconWithLabel('green')
                 : iconWithLabel('red')
             }

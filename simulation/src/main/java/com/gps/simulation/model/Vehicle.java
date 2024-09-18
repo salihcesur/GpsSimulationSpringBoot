@@ -1,6 +1,8 @@
 package com.gps.simulation.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,9 +22,11 @@ public class Vehicle {
     private int speed;
     private double currentLatitude;
     private double currentLongitude;
-    private boolean completed;
 
-    // Yeni alanlar
+    // Yeni enum alanı
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
     private double startLatitude;
     private double startLongitude;
     private double destinationLatitude;
@@ -30,5 +34,6 @@ public class Vehicle {
 
     public Vehicle(int speed) {
         this.speed = speed;
+        this.status = Status.READY; // Varsayılan olarak 'READY' durumu
     }
 }

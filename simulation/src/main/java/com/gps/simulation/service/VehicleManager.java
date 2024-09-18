@@ -1,5 +1,6 @@
 package com.gps.simulation.service;
 
+import com.gps.simulation.model.Status;
 import com.gps.simulation.model.Vehicle;
 import com.gps.simulation.repositories.VehicleRepository;
 import lombok.Getter;
@@ -22,9 +23,9 @@ public class VehicleManager {
         List<Vehicle> newVehicles = new ArrayList<>();
 
         for (int i = 1; i <= vehicleCount; i++) {
-            int speed = 120;
-            Vehicle vehicle = new Vehicle(speed);
-            vehicleRepository.save(vehicle);  // Veritabanına kaydediyoruz
+            Vehicle vehicle = new Vehicle(120);
+            vehicle.setStatus(Status.READY);
+            vehicleRepository.save(vehicle);
             newVehicles.add(vehicle);
         }
 
