@@ -53,7 +53,6 @@ public class RouteSimulator {
                 vehicle.setStatus(Status.READY);
                 vehicleProducerService.sendVehicleData(vehicle);
                 Thread.sleep(1000);
-                vehicle.setStatus(Status.ON_ROAD);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -75,6 +74,7 @@ public class RouteSimulator {
         long sleepTime = (long) (100);
 
         while (stepIndex < routeSteps.size()) {
+            vehicle.setStatus(Status.ON_ROAD);
             double[] currentStep = routeSteps.get(stepIndex);
             double[] nextStep = stepIndex + 1 < routeSteps.size() ? routeSteps.get(stepIndex + 1) : null;
 
