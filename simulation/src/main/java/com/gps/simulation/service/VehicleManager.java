@@ -1,6 +1,6 @@
 package com.gps.simulation.service;
 
-import com.gps.simulation.model.Status;
+import com.gps.simulation.model.enums.Status;
 import com.gps.simulation.model.Vehicle;
 import com.gps.simulation.repositories.VehicleRepository;
 import lombok.Getter;

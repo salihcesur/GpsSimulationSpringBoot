@@ -3,6 +3,7 @@ import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from "@react-google
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
+// Harita ayarları
 const mapContainerStyle = {
   width: "100%",
   height: "500px",
@@ -15,6 +16,7 @@ const initialCenter = {
 
 const defaultZoom = 6;
 
+// İkon ayarları
 const iconWithLabel = (color) => ({
   url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
   labelOrigin: new window.google.maps.Point(15, 35),
@@ -24,7 +26,10 @@ const iconWithLabel = (color) => ({
 const App = () => {
   const [vehicles, setVehicles] = useState([]);
   const [routes, setRoutes] = useState({});
+  const [notifications, setNotifications] = useState([]); // Ülke değişim bildirimleri için state
+  const [loading, setLoading] = useState(true); // Yükleme durumu kontrolü
 
+  // Araç rotasını Google Maps API ile hesaplama
   const calculateRoute = (vehicle) => {
     const directionsService = new window.google.maps.DirectionsService();
     directionsService.route(
@@ -46,33 +51,42 @@ const App = () => {
     );
   };
 
+  // WebSocket bağlantısı ve veri alma
   useEffect(() => {
     const socket = new SockJS("http://localhost:8081/ws");
     const stompClient = Stomp.over(socket);
-
+  
     stompClient.connect({}, () => {
+      // Araç konumlarını dinleme
       stompClient.subscribe("/topic/vehicleLocation", (message) => {
         const vehicle = JSON.parse(message.body);
-
         setVehicles((prevVehicles) => {
           const existingVehicle = prevVehicles.find(v => v.vehicleId === vehicle.vehicleId);
-
           if (existingVehicle) {
             return prevVehicles.map(v => v.vehicleId === vehicle.vehicleId ? vehicle : v);
           } else {
             return [...prevVehicles, vehicle];
           }
         });
+        setLoading(false); // Veriler yüklendiğinde loading false yapılır
+      });
+  
+      // Ülke değişim bildirimlerini dinleme
+      stompClient.subscribe("/topic/vehicleNotification", (message) => {
+        console.log("Ülke değişim bildirimi alındı:", message.body);
+        setNotifications((prevNotifications) => [...prevNotifications, message.body]);
       });
     });
-
+  
     return () => {
       if (stompClient) {
         stompClient.disconnect();
       }
     };
   }, []);
+  
 
+  // Araç rotalarını hesaplama
   useEffect(() => {
     vehicles.forEach((vehicle) => {
       if (vehicle.status === "READY" && !routes[vehicle.vehicleId]) {
@@ -81,6 +95,7 @@ const App = () => {
     });
   }, [vehicles, routes]);
 
+  // Aracın rotasını temizleme
   const clearRoute = (vehicleId) => {
     setRoutes((prevRoutes) => {
       const newRoutes = { ...prevRoutes };
@@ -89,6 +104,7 @@ const App = () => {
     });
   };
 
+  // Araç rotası tamamlandığında rotayı temizleme
   useEffect(() => {
     vehicles.forEach((vehicle) => {
       if (vehicle.status === "COMPLETED") {
@@ -98,47 +114,67 @@ const App = () => {
   }, [vehicles]);
 
   return (
-    <LoadScript googleMapsApiKey="AIzaSyAoyH2S0s-LqCrGKcFmF4lmV06_mwKlKK8">
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
-        zoom={defaultZoom}
-        center={initialCenter}
-        options={{
-          disableDefaultUI: true, 
-          zoomControl: true, 
-          fullscreenControl: true,
-        }}
-      >
-        {vehicles.map((vehicle) => (
-          <Marker
-            key={vehicle.vehicleId}
-            position={{ lat: vehicle.currentLatitude, lng: vehicle.currentLongitude }}
-            label={{
-              text: vehicle.vehicleId ? String(vehicle.vehicleId) : "Unknown",
-              fontSize: "14px",
-              fontWeight: "bold",
-              color: "black",
-            }}
-            icon={
-              vehicle.status === "COMPLETED"
-                ? iconWithLabel('green')
-                : iconWithLabel('red')
-            }
-          />
-        ))}
+    <div>
+      {/* Yükleme göstergesi */}
+      {loading && <p>Veriler yükleniyor...</p>}
 
-        {Object.keys(routes).map((vehicleId) => (
-          <DirectionsRenderer
-            key={vehicleId}
-            directions={routes[vehicleId]}
-            options={{ 
-              suppressMarkers: true, 
-              preserveViewport: true 
-            }}
-          />
-        ))}
-      </GoogleMap>
-    </LoadScript>
+      {/* Harita */}
+      <LoadScript googleMapsApiKey="AIzaSyAoyH2S0s-LqCrGKcFmF4lmV06_mwKlKK8">
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          zoom={defaultZoom}
+          center={initialCenter}
+          options={{
+            disableDefaultUI: true, 
+            zoomControl: true, 
+            fullscreenControl: true,
+          }}
+        >
+          {/* Araçlar */}
+          {vehicles.map((vehicle) => (
+            <Marker
+              key={vehicle.vehicleId}
+              position={{ lat: vehicle.currentLatitude, lng: vehicle.currentLongitude }}
+              label={{
+                text: vehicle.vehicleId ? String(vehicle.vehicleId) : "Unknown",
+                fontSize: "14px",
+                fontWeight: "bold",
+                color: "black",
+              }}
+              icon={
+                vehicle.status === "COMPLETED"
+                  ? iconWithLabel('green')
+                  : iconWithLabel('red')
+              }
+            />
+          ))}
+
+          {/* Araç rotaları */}
+          {Object.keys(routes).map((vehicleId) => (
+            <DirectionsRenderer
+              key={vehicleId}
+              directions={routes[vehicleId]}
+              options={{ 
+                suppressMarkers: true, 
+                preserveViewport: true 
+              }}
+            />
+          ))}
+        </GoogleMap>
+      </LoadScript>
+
+      {/* Bildirimler */}
+      <div style={{ marginTop: '20px' }}>
+        <h3>Ülke Değişim Bildirimleri</h3>
+        <ul style={{ listStyleType: 'none', padding: 0 }}>
+          {notifications.map((notification, index) => (
+            <li key={index} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
+              {notification}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 };
 

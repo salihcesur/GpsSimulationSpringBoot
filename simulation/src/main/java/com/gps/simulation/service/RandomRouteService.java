@@ -20,7 +20,7 @@ public class RandomRouteService {
     }
 
     public String[] getRandomCities() {
-        String[] cities = {"Istanbul", "Berlin", "Paris", "Erzurum", "Antalya", "Trabzon", "Prag", "Varşova", "Madrid", "Roma", "Kiev"};
+        String[] cities = {"Istanbul", "Berlin", "Paris", "Erzurum", "Antalya", "Trabzon", "Prag", "Varşova", "Madrid", "Roma"};
 
         Random random = new Random();
         String origin = cities[random.nextInt(cities.length)];

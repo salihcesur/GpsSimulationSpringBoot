@@ -1,4 +1,4 @@
-package com.gps.simulation.model;
+package com.gps.simulation.model.enums;
 
 public enum Status {
     READY,

@@ -8,13 +8,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Service
 public class VehicleProducerService {
 
-    private static final String TOPIC = "vehicle_data";  // Kafka'da veri gönderilecek topic
+    private static final String VEHICLE_TOPIC = "vehicle_data";
+    private static final String NOTIFICATION_TOPIC = "vehicle_notification";
 
     @Autowired
     private KafkaTemplate<String, Vehicle> kafkaTemplate;
 
+    @Autowired
+    private KafkaTemplate<String, String> stringKafkaTemplate; // String mesajlar için ayrı KafkaTemplate
+
     public void sendVehicleData(Vehicle vehicle) {
-        kafkaTemplate.send(TOPIC, vehicle);  // Aracı Kafka'ya gönder
+        kafkaTemplate.send(VEHICLE_TOPIC, vehicle.getVehicleId().toString(), vehicle);
         System.out.println("Kafka'ya araç verisi gönderildi: " + vehicle);
+    }
+
+    public void sendCountryChangeNotification(Long vehicleId, String currentCountry) {
+        // Ülkeye giriş bildirimi için mesaj formatı
+        String message = vehicleId + " ID'li araç " + currentCountry + " ülkesine giriş yaptı.";
+
+        // Bu bildirimi Kafka'ya gönderiyoruz
+        stringKafkaTemplate.send(NOTIFICATION_TOPIC, vehicleId.toString(), message);
+        System.out.println("Kafka'ya ülke değişim bildirimi gönderildi: " + message);
     }
 }

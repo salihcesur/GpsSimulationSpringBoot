@@ -8,7 +8,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Service
 public class DistanceCalculatorService {
@@ -50,5 +49,31 @@ public class DistanceCalculatorService {
         }
 
         return routeSteps;
+    }
+
+    public String getCountryFromCoordinates(double latitude, double longitude) {
+        String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + latitude + "," + longitude + "&key=" + apiKey;
+        RestTemplate restTemplate = new RestTemplate();
+        String response = restTemplate.getForObject(url, String.class);
+
+        JSONObject jsonResponse = new JSONObject(response);
+        JSONArray results = jsonResponse.getJSONArray("results");
+
+        for (int i = 0; i < results.length(); i++) {
+            JSONObject result = results.getJSONObject(i);
+            JSONArray addressComponents = result.getJSONArray("address_components");
+
+            for (int j = 0; j < addressComponents.length(); j++) {
+                JSONObject component = addressComponents.getJSONObject(j);
+                JSONArray types = component.getJSONArray("types");
+
+                for (int k = 0; k < types.length(); k++) {
+                    if (types.getString(k).equals("country")) {
+                        return component.getString("long_name");
+                    }
+                }
+            }
+        }
+        return "Unknown";
     }
 }

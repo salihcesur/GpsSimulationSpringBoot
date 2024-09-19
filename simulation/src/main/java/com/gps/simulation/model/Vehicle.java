@@ -1,5 +1,6 @@
 package com.gps.simulation.model;
 
+import com.gps.simulation.model.enums.Status;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -23,7 +24,6 @@ public class Vehicle {
     private double currentLatitude;
     private double currentLongitude;
 
-    // Yeni enum alanı
     @Enumerated(EnumType.STRING)
     private Status status;
 
@@ -31,6 +31,8 @@ public class Vehicle {
     private double startLongitude;
     private double destinationLatitude;
     private double destinationLongitude;
+    private String currentCountry;
+
 
     public Vehicle(int speed) {
         this.speed = speed;
