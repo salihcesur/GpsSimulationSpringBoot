@@ -3,13 +3,12 @@ package com.gps.simulation.service;
 import com.gps.simulation.kafka.VehicleProducerService;
 import com.gps.simulation.model.Status;
 import com.gps.simulation.model.Vehicle;
-import com.gps.simulation.repositories.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -50,8 +49,14 @@ public class RouteSimulator {
             vehicle.setDestinationLatitude(endPoint[0]);
             vehicle.setDestinationLongitude(endPoint[1]);
 
-            vehicle.setStatus(Status.READY);
-            vehicleProducerService.sendVehicleData(vehicle);
+            try {
+                vehicle.setStatus(Status.READY);
+                vehicleProducerService.sendVehicleData(vehicle);
+                Thread.sleep(1000);
+                vehicle.setStatus(Status.ON_ROAD);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
@@ -67,7 +72,7 @@ public class RouteSimulator {
         double timeToTravelOneKm = 3600 / speedKmPerHour;
 
         double simulationSpeedFactor = 3600.0 / 30.0;
-        long sleepTime = (long) ((timeToTravelOneKm / simulationSpeedFactor) * 1000);
+        long sleepTime = (long) (100);
 
         while (stepIndex < routeSteps.size()) {
             double[] currentStep = routeSteps.get(stepIndex);
@@ -81,9 +86,11 @@ public class RouteSimulator {
                 totalDistance += distance;
                 remainingDistanceToNotify -= distance;
 
+                // Bildirim gönderme zamanı geldi mi?
                 if (remainingDistanceToNotify <= 0) {
                     vehicleProducerService.sendVehicleData(vehicle);
                     System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " " + distanceInterval + " km yol aldı.");
+                    // Kalan mesafeyi bir sonraki bildirim için ayarla
                     remainingDistanceToNotify += distanceInterval;
                 }
 
@@ -100,6 +107,7 @@ public class RouteSimulator {
         vehicleProducerService.sendVehicleData(vehicle);
         System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
     }
+
 
     private String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");

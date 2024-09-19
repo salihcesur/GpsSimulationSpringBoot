@@ -22,8 +22,7 @@ public class VehicleKafkaConsumer {
         try {
             Vehicle vehicle = objectMapper.readValue(vehicleMessage, Vehicle.class);
             messagingTemplate.convertAndSend("/topic/vehicleLocation", vehicle);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Araç verisi işlenirken hata oluştu", e);
         }
     }

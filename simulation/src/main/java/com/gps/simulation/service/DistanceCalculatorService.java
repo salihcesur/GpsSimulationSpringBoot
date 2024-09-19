@@ -49,6 +49,6 @@ public class DistanceCalculatorService {
             routeSteps.add(new double[]{startLat, startLng});
         }
 
-        return routeSteps; 
+        return routeSteps;
     }
 }

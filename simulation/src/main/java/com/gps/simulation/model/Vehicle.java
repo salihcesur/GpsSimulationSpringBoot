@@ -34,6 +34,6 @@ public class Vehicle {
 
     public Vehicle(int speed) {
         this.speed = speed;
-        this.status = Status.READY; // Varsayılan olarak 'READY' durumu
+        this.status = Status.READY;
     }
 }

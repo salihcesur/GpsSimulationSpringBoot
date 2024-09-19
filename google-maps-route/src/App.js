@@ -8,13 +8,11 @@ const mapContainerStyle = {
   height: "500px",
 };
 
-// Türkiye'nin merkez koordinatları
 const initialCenter = {
   lat: 39.9334,
   lng: 32.8597,
 };
 
-// Haritanın başlangıçtaki sabit zoom seviyesi
 const defaultZoom = 6;
 
 const iconWithLabel = (color) => ({
@@ -27,7 +25,6 @@ const App = () => {
   const [vehicles, setVehicles] = useState([]);
   const [routes, setRoutes] = useState({});
 
-  // Araç için rota hesaplayın
   const calculateRoute = (vehicle) => {
     const directionsService = new window.google.maps.DirectionsService();
     directionsService.route(
@@ -49,7 +46,6 @@ const App = () => {
     );
   };
 
-  // WebSocket ile araç verilerini alın
   useEffect(() => {
     const socket = new SockJS("http://localhost:8081/ws");
     const stompClient = Stomp.over(socket);
@@ -77,16 +73,14 @@ const App = () => {
     };
   }, []);
 
-  // Araç READY durumunda ise rota hesapla
   useEffect(() => {
     vehicles.forEach((vehicle) => {
       if (vehicle.status === "READY" && !routes[vehicle.vehicleId]) {
-        calculateRoute(vehicle); // READY durumundaki araç için rota hesapla
+        calculateRoute(vehicle);
       }
     });
   }, [vehicles, routes]);
 
-  // Rota temizleme fonksiyonu
   const clearRoute = (vehicleId) => {
     setRoutes((prevRoutes) => {
       const newRoutes = { ...prevRoutes };
@@ -95,11 +89,10 @@ const App = () => {
     });
   };
 
-  // Araç COMPLETED durumunda rotayı kaldır
   useEffect(() => {
     vehicles.forEach((vehicle) => {
       if (vehicle.status === "COMPLETED") {
-        clearRoute(vehicle.vehicleId); // COMPLETED olan aracın rotasını kaldır
+        clearRoute(vehicle.vehicleId);
       }
     });
   }, [vehicles]);
@@ -108,12 +101,12 @@ const App = () => {
     <LoadScript googleMapsApiKey="AIzaSyAoyH2S0s-LqCrGKcFmF4lmV06_mwKlKK8">
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        zoom={defaultZoom} // Zoom seviyesini sabitliyoruz
-        center={initialCenter} // Haritanın merkezini Türkiye'ye sabitliyoruz
+        zoom={defaultZoom}
+        center={initialCenter}
         options={{
-          disableDefaultUI: true, // Varsayılan harita kontrollerini gizle
-          zoomControl: true, // Sadece zoom kontrolü aktif
-          fullscreenControl: true, // Tam ekran kontrolünü geri getir
+          disableDefaultUI: true, 
+          zoomControl: true, 
+          fullscreenControl: true,
         }}
       >
         {vehicles.map((vehicle) => (
@@ -140,7 +133,7 @@ const App = () => {
             directions={routes[vehicleId]}
             options={{ 
               suppressMarkers: true, 
-              preserveViewport: true  // Viewport'u koruyoruz, böylece harita yakınlaşmaz
+              preserveViewport: true 
             }}
           />
         ))}

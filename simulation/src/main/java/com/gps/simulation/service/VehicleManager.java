@@ -6,6 +6,7 @@ import com.gps.simulation.repositories.VehicleRepository;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
 public class VehicleManager {
 
     @Autowired
-    private VehicleRepository vehicleRepository;  // vehicleRepository burada enjekte ediliyor
+    private VehicleRepository vehicleRepository;
 
     @Getter
     private final List<Vehicle> vehicles = new ArrayList<>();
@@ -28,6 +29,7 @@ public class VehicleManager {
             vehicleRepository.save(vehicle);
             newVehicles.add(vehicle);
         }
+
 
         return newVehicles;
     }
