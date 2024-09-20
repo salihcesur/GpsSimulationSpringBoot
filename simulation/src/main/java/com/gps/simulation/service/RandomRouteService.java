@@ -12,7 +12,6 @@ public class RandomRouteService {
 
     private final DistanceCalculatorService distanceCalculatorService;
     private final SimpMessagingTemplate messagingTemplate;
-
     @Autowired
     public RandomRouteService(DistanceCalculatorService distanceCalculatorService, SimpMessagingTemplate messagingTemplate) {
         this.distanceCalculatorService = distanceCalculatorService;

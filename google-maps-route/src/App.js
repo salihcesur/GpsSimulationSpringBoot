@@ -74,7 +74,7 @@ const App = () => {
       // Ülke değişim bildirimlerini dinleme
       stompClient.subscribe("/topic/vehicleNotification", (message) => {
         console.log("Ülke değişim bildirimi alındı:", message.body);
-        setNotifications((prevNotifications) => [...prevNotifications, message.body]);
+        setNotifications((prevNotifications) => [message.body, ...prevNotifications]); // Yeni bildirim en üste eklenir
       });
     });
   
@@ -114,7 +114,7 @@ const App = () => {
   }, [vehicles]);
 
   return (
-    <div>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       {/* Yükleme göstergesi */}
       {loading && <p>Veriler yükleniyor...</p>}
 
@@ -164,11 +164,11 @@ const App = () => {
       </LoadScript>
 
       {/* Bildirimler */}
-      <div style={{ marginTop: '20px' }}>
-        <h3>Ülke Değişim Bildirimleri</h3>
-        <ul style={{ listStyleType: 'none', padding: 0 }}>
+      <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
+        <h3 style={{ textAlign: 'center', color: '#333', fontWeight: 'bold', marginBottom: '10px' }}>Ülke Değişim Bildirimleri</h3>
+        <ul style={{ listStyleType: 'none', padding: 0, margin: 0, maxHeight: '300px', overflowY: 'scroll' }}>
           {notifications.map((notification, index) => (
-            <li key={index} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
+            <li key={index} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#fff', boxShadow: '0 0 5px rgba(0, 0, 0, 0.1)' }}>
               {notification}
             </li>
           ))}

@@ -32,7 +32,6 @@ public class VehicleKafkaConsumer {
     @KafkaListener(topics = "vehicle_notification", groupId = "vehicle_group")
     public void consumeCountryChangeNotification(String notificationMessage) {
         try {
-            // Ülke değişim bildirimi WebSocket ile frontend'e gönderiliyor
             messagingTemplate.convertAndSend("/topic/vehicleNotification", notificationMessage);
         } catch (Exception e) {
             throw new RuntimeException("Ülke değişim bildirimi işlenirken hata oluştu", e);

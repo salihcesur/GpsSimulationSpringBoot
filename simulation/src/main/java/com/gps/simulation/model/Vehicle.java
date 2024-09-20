@@ -20,17 +20,24 @@ public class Vehicle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long vehicleId;
+
     private int speed;
+
     private double currentLatitude;
+
     private double currentLongitude;
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
     private double startLatitude;
+
     private double startLongitude;
+
     private double destinationLatitude;
+
     private double destinationLongitude;
+
     private String currentCountry;
 
 
