@@ -20,7 +20,6 @@ public class VehicleWebSocketController {
         this.vehicleRepository = vehicleRepository;
     }
 
-
     public void sendVehicleLocation() {
         for (Vehicle vehicle : vehicleManager.getVehicles()) {
             messagingTemplate.convertAndSend("/topic/vehicleLocation", vehicle);

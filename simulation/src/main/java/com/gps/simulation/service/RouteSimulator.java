@@ -75,9 +75,9 @@ public class RouteSimulator {
                     remainingDistanceToNotify = distanceInterval;
                 }
 
-                vehicleRepository.save(vehicle);
+                //vehicleRepository.save(vehicle);
 
-                Thread.sleep(1000);
+                Thread.sleep(500);
 
                 stepIndex++;
             }
@@ -87,6 +87,7 @@ public class RouteSimulator {
             vehicleProducerService.sendVehicleData(vehicle);
 
         } catch (Exception e) {
+            // Simülasyon sırasında hata oluşursa
             vehicle.setStatus(Status.FAILED);
             vehicleRepository.save(vehicle);
             vehicleProducerService.sendVehicleData(vehicle);
@@ -99,35 +100,33 @@ public class RouteSimulator {
         List<Vehicle> vehicles = vehicleManager.createVehicles(vehicleCount);
 
         for (Vehicle vehicle : vehicles) {
-            String[] cities = randomRouteService.getRandomCities();
-            List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
-
-            double[] startPoint = routeSteps.get(0);
-            double[] endPoint = routeSteps.get(routeSteps.size() - 1);
-
-            vehicle.setStartLatitude(startPoint[0]);
-            vehicle.setStartLongitude(startPoint[1]);
-            vehicle.setDestinationLatitude(endPoint[0]);
-            vehicle.setDestinationLongitude(endPoint[1]);
-
             try {
+                String[] cities = randomRouteService.getRandomCities();
+                List<double[]> routeSteps = distanceCalculatorService.getRouteSteps(cities[0], cities[1]);
+
+                double[] startPoint = routeSteps.get(0);
+                double[] endPoint = routeSteps.get(routeSteps.size() - 1);
+
+                vehicle.setStartLatitude(startPoint[0]);
+                vehicle.setStartLongitude(startPoint[1]);
+                vehicle.setDestinationLatitude(endPoint[0]);
+                vehicle.setDestinationLongitude(endPoint[1]);
+
                 vehicle.setStatus(Status.READY);
 
-                vehicleProducerService.sendStartEndCityNotification(vehicle.getVehicleId(), cities[0], cities[1]);
+                vehicle.setCurrentLatitude(startPoint[0]);
+                vehicle.setCurrentLongitude(startPoint[1]);
 
                 vehicleProducerService.sendVehicleData(vehicle);
+                vehicleProducerService.sendStartEndCityNotification(vehicle.getVehicleId(), cities[0], cities[1]);
+
                 Thread.sleep(500);
+
+                self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
+
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-
-            self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
-    }
-
-
-    private String getCurrentTime() {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-        return formatter.format(new Date());
     }
 }

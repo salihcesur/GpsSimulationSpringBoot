@@ -87,10 +87,6 @@ const App = () => {
       }
     };
   }, []);
-  
-  
-  
-  
 
   // Araç rotalarını hesaplama
   useEffect(() => {
@@ -169,8 +165,7 @@ const App = () => {
         </GoogleMap>
       </LoadScript>
 
-      {/* Bildirimler */}
-      {/* Bildirimler */}
+  
     <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
       <h3 style={{ textAlign: 'center', color: '#333', fontWeight: 'bold', marginBottom: '10px' }}>Ülke ve Şehir Bildirimleri</h3>
       <ul style={{ listStyleType: 'none', padding: 0, margin: 0, maxHeight: '300px', overflowY: 'scroll' }}>
