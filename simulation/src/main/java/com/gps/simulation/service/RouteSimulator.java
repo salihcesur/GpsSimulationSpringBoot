@@ -26,6 +26,7 @@ public class RouteSimulator {
     @Lazy
     private RouteSimulator self;
 
+    @Autowired
     public RouteSimulator(DistanceCalculatorService distanceCalculatorService, VehicleManager vehicleManager,
                           VehicleProducerService vehicleProducerService, RandomRouteService randomRouteService, VehicleRepository vehicleRepository) {
         this.distanceCalculatorService = distanceCalculatorService;
@@ -41,63 +42,56 @@ public class RouteSimulator {
         double totalDistance = 0;
         double remainingDistanceToNotify = distanceInterval;
 
-        // İlk konum bilgilerini ayarlıyoruz
-        if (!routeSteps.isEmpty()) {
-            double[] startPoint = routeSteps.get(0);
-            vehicle.setCurrentLatitude(startPoint[0]);
-            vehicle.setCurrentLongitude(startPoint[1]);
-            vehicle.setStatus(Status.ON_ROAD);
+        try {
+            if (!routeSteps.isEmpty()) {
+                double[] startPoint = routeSteps.get(0);
+                vehicle.setCurrentLatitude(startPoint[0]);
+                vehicle.setCurrentLongitude(startPoint[1]);
+                vehicle.setStatus(Status.ON_ROAD);
 
-            // İlk ülkeyi ayarlıyoruz
-            String lastCountry = distanceCalculatorService.getCountryFromCoordinates(startPoint[0], startPoint[1]);
-            vehicle.setCurrentCountry(lastCountry);
-        }
-
-        // Simülasyon boyunca adım adım ilerliyoruz
-        while (stepIndex < routeSteps.size() - 1) {  // Her adımda ilerle
-            double[] currentStep = routeSteps.get(stepIndex);
-            double[] nextStep = routeSteps.get(stepIndex + 1);
-
-            // Google API kullanarak iki konum arasındaki mesafeyi hesapla
-            double distance = distanceCalculatorService.calculateDistance(currentStep, nextStep);
-            totalDistance += distance;
-            remainingDistanceToNotify -= distance;
-
-            // Aracın yeni konumunu güncelle
-            vehicle.setCurrentLatitude(nextStep[0]);
-            vehicle.setCurrentLongitude(nextStep[1]);
-
-            // Ülke değişimini kontrol et
-            String currentCountry = distanceCalculatorService.getCountryFromCoordinates(nextStep[0], nextStep[1]);
-            if (!currentCountry.equals(vehicle.getCurrentCountry())) {
-                // Eğer ülke değiştiyse, bildirim gönder
-                vehicle.setCurrentCountry(currentCountry);
-                vehicleProducerService.sendCountryChangeNotification(vehicle.getVehicleId(), currentCountry);
+                String lastCountry = distanceCalculatorService.getCountryFromCoordinates(startPoint[0], startPoint[1]);
+                vehicle.setCurrentCountry(lastCountry);
             }
 
-            // Eğer belirlenen mesafe kat edildiyse bildirim gönder
-            if (remainingDistanceToNotify <= 0) {
-                vehicleProducerService.sendVehicleData(vehicle);  // Bildirim gönder
-                remainingDistanceToNotify = distanceInterval;     // Kalan mesafeyi sıfırla
+            while (stepIndex < routeSteps.size() - 1) {
+                double[] currentStep = routeSteps.get(stepIndex);
+                double[] nextStep = routeSteps.get(stepIndex + 1);
+
+                double distance = distanceCalculatorService.calculateDistance(currentStep, nextStep);
+                totalDistance += distance;
+                remainingDistanceToNotify -= distance;
+
+                vehicle.setCurrentLatitude(nextStep[0]);
+                vehicle.setCurrentLongitude(nextStep[1]);
+
+                String currentCountry = distanceCalculatorService.getCountryFromCoordinates(nextStep[0], nextStep[1]);
+                if (!currentCountry.equals(vehicle.getCurrentCountry())) {
+                    vehicle.setCurrentCountry(currentCountry);
+                    vehicleProducerService.sendCountryChangeNotification(vehicle.getVehicleId(), currentCountry);
+                }
+
+                if (remainingDistanceToNotify <= 0) {
+                    vehicleProducerService.sendVehicleData(vehicle);
+                    remainingDistanceToNotify = distanceInterval;
+                }
+
+                vehicleRepository.save(vehicle);
+
+                Thread.sleep(1000);
+
+                stepIndex++;
             }
 
-            // Aracın mevcut durumunu veritabanına kaydet
+            vehicle.setStatus(Status.COMPLETED);
             vehicleRepository.save(vehicle);
+            vehicleProducerService.sendVehicleData(vehicle);
 
-            // Simülasyon hızını ayarlamak için bekletme süresi
-            try {
-                Thread.sleep(1000);  // Simülasyon hızını yavaşlatmak için 1 saniye bekle
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            stepIndex++;  // Bir sonraki adıma geç
+        } catch (Exception e) {
+            vehicle.setStatus(Status.FAILED);
+            vehicleRepository.save(vehicle);
+            vehicleProducerService.sendVehicleData(vehicle);
+            System.err.println("Simülasyon sırasında bir hata oluştu: " + e.getMessage());
         }
-
-        // Simülasyon tamamlandığında aracı tamamlanmış olarak işaretle
-        vehicle.setStatus(Status.COMPLETED);
-        vehicleRepository.save(vehicle);  // Son durumu kaydet
-        vehicleProducerService.sendVehicleData(vehicle);  // Son bir bildirim gönder
     }
 
     @Async("taskExecutor")
@@ -118,8 +112,11 @@ public class RouteSimulator {
 
             try {
                 vehicle.setStatus(Status.READY);
+
+                vehicleProducerService.sendStartEndCityNotification(vehicle.getVehicleId(), cities[0], cities[1]);
+
                 vehicleProducerService.sendVehicleData(vehicle);
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -127,6 +124,7 @@ public class RouteSimulator {
             self.simulateVehicleJourney(vehicle, routeSteps, distanceInterval);
         }
     }
+
 
     private String getCurrentTime() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");

@@ -1,11 +1,11 @@
 package com.gps.simulation.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gps.simulation.model.Vehicle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class VehicleKafkaConsumer {
@@ -14,9 +14,9 @@ public class VehicleKafkaConsumer {
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public VehicleKafkaConsumer(SimpMessagingTemplate messagingTemplate) {
+    public VehicleKafkaConsumer(SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
         this.messagingTemplate = messagingTemplate;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     @KafkaListener(topics = "vehicle_data", groupId = "vehicle_group")
@@ -35,6 +35,15 @@ public class VehicleKafkaConsumer {
             messagingTemplate.convertAndSend("/topic/vehicleNotification", notificationMessage);
         } catch (Exception e) {
             throw new RuntimeException("Ülke değişim bildirimi işlenirken hata oluştu", e);
+        }
+    }
+
+    @KafkaListener(topics = "vehicle_start_end", groupId = "vehicle_group")
+    public void consumeStartEndCityNotification(String notificationMessage) {
+        try {
+            messagingTemplate.convertAndSend("/topic/vehicleStartEnd", notificationMessage);
+        } catch (Exception e) {
+            throw new RuntimeException("Başlangıç/Bitiş şehir bildirimi işlenirken hata oluştu", e);
         }
     }
 }

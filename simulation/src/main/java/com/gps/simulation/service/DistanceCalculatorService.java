@@ -26,7 +26,6 @@ public class DistanceCalculatorService {
         JSONObject jsonResponse = new JSONObject(response);
         JSONArray routes = jsonResponse.getJSONArray("routes");
 
-        // En kısa rotanın toplam mesafesini alıyoruz
         if (routes.length() > 0) {
             JSONObject route = routes.getJSONObject(0);
             JSONArray legs = route.getJSONArray("legs");
@@ -36,12 +35,11 @@ public class DistanceCalculatorService {
                 JSONObject distanceObject = leg.getJSONObject("distance");
                 double distanceInMeters = distanceObject.getDouble("value");
 
-                // Mesafeyi kilometreye çeviriyoruz
                 return distanceInMeters / 1000;
             }
         }
 
-        return 0;  // Eğer mesafe hesaplanamazsa 0 döndürüyoruz
+        return 0;
     }
 
 

@@ -10,6 +10,7 @@ public class VehicleProducerService {
 
     private static final String VEHICLE_TOPIC = "vehicle_data";
     private static final String NOTIFICATION_TOPIC = "vehicle_notification";
+    private static final String START_END_TOPIC = "vehicle_start_end";
 
     @Autowired
     private KafkaTemplate<String, Vehicle> kafkaTemplate;
@@ -26,5 +27,11 @@ public class VehicleProducerService {
         String message = vehicleId + " ID'li araç " + currentCountry + " ülkesine giriş yaptı.";
         stringKafkaTemplate.send(NOTIFICATION_TOPIC, vehicleId.toString(), message);
         System.out.println("Kafka'ya ülke değişim bildirimi gönderildi: " + message);
+    }
+
+    public void sendStartEndCityNotification(Long vehicleId, String startCity, String endCity) {
+        String message = "Araç " + vehicleId + " yola çıktı! Başlangıç: " + startCity + ", Bitiş: " + endCity;
+        stringKafkaTemplate.send(START_END_TOPIC, vehicleId.toString(), message);
+        System.out.println("Kafka'ya başlangıç ve bitiş şehir bilgisi gönderildi: " + message);
     }
 }
