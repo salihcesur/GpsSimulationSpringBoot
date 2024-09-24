@@ -40,56 +40,64 @@ public class RouteSimulator {
         int stepIndex = 0;
         double totalDistance = 0;
         double remainingDistanceToNotify = distanceInterval;
-        double speedKmPerHour = 120;
-        double timeToTravelOneKm = 3600 / speedKmPerHour;
 
-        String lastCountry = distanceCalculatorService.getCountryFromCoordinates(vehicle.getCurrentLatitude(), vehicle.getCurrentLongitude());
-        vehicle.setCurrentCountry(lastCountry);
-
-        double simulationSpeedFactor = 3600.0 / 30.0;
-        long sleepTime = (long) (100);
-
-        while (stepIndex < routeSteps.size()) while (stepIndex < routeSteps.size()) {
+        // İlk konum bilgilerini ayarlıyoruz
+        if (!routeSteps.isEmpty()) {
+            double[] startPoint = routeSteps.get(0);
+            vehicle.setCurrentLatitude(startPoint[0]);
+            vehicle.setCurrentLongitude(startPoint[1]);
             vehicle.setStatus(Status.ON_ROAD);
-            double[] currentStep = routeSteps.get(stepIndex);
-            double[] nextStep = stepIndex + 1 < routeSteps.size() ? routeSteps.get(stepIndex + 1) : null;
 
-            vehicle.setCurrentLatitude(currentStep[0]);
-            vehicle.setCurrentLongitude(currentStep[1]);
-
-            if (nextStep != null) {
-                double distance = distanceCalculatorService.calculateDistance(currentStep, nextStep);
-                totalDistance += distance;
-                remainingDistanceToNotify -= distance;
-
-                String currentCountry = distanceCalculatorService.getCountryFromCoordinates(vehicle.getCurrentLatitude(), vehicle.getCurrentLongitude());
-
-                if (!currentCountry.equals(lastCountry)) {
-                    String message = vehicle.getVehicleId() + " ID'li araç " + currentCountry + " ülkesine giriş yaptı.";
-                    vehicle.setCurrentCountry(currentCountry);
-                    vehicleProducerService.sendCountryChangeNotification(vehicle.getVehicleId(), currentCountry);
-                    lastCountry = currentCountry;
-                }
-
-                if (remainingDistanceToNotify <= 0) {
-                    vehicleProducerService.sendVehicleData(vehicle);
-                    remainingDistanceToNotify += distanceInterval;
-                }
-
-                try {
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            vehicleRepository.save(vehicle);
-            stepIndex++;
+            // İlk ülkeyi ayarlıyoruz
+            String lastCountry = distanceCalculatorService.getCountryFromCoordinates(startPoint[0], startPoint[1]);
+            vehicle.setCurrentCountry(lastCountry);
         }
 
+        // Simülasyon boyunca adım adım ilerliyoruz
+        while (stepIndex < routeSteps.size() - 1) {  // Her adımda ilerle
+            double[] currentStep = routeSteps.get(stepIndex);
+            double[] nextStep = routeSteps.get(stepIndex + 1);
+
+            // Google API kullanarak iki konum arasındaki mesafeyi hesapla
+            double distance = distanceCalculatorService.calculateDistance(currentStep, nextStep);
+            totalDistance += distance;
+            remainingDistanceToNotify -= distance;
+
+            // Aracın yeni konumunu güncelle
+            vehicle.setCurrentLatitude(nextStep[0]);
+            vehicle.setCurrentLongitude(nextStep[1]);
+
+            // Ülke değişimini kontrol et
+            String currentCountry = distanceCalculatorService.getCountryFromCoordinates(nextStep[0], nextStep[1]);
+            if (!currentCountry.equals(vehicle.getCurrentCountry())) {
+                // Eğer ülke değiştiyse, bildirim gönder
+                vehicle.setCurrentCountry(currentCountry);
+                vehicleProducerService.sendCountryChangeNotification(vehicle.getVehicleId(), currentCountry);
+            }
+
+            // Eğer belirlenen mesafe kat edildiyse bildirim gönder
+            if (remainingDistanceToNotify <= 0) {
+                vehicleProducerService.sendVehicleData(vehicle);  // Bildirim gönder
+                remainingDistanceToNotify = distanceInterval;     // Kalan mesafeyi sıfırla
+            }
+
+            // Aracın mevcut durumunu veritabanına kaydet
+            vehicleRepository.save(vehicle);
+
+            // Simülasyon hızını ayarlamak için bekletme süresi
+            try {
+                Thread.sleep(1000);  // Simülasyon hızını yavaşlatmak için 1 saniye bekle
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            stepIndex++;  // Bir sonraki adıma geç
+        }
+
+        // Simülasyon tamamlandığında aracı tamamlanmış olarak işaretle
         vehicle.setStatus(Status.COMPLETED);
-        vehicleRepository.save(vehicle);
-        vehicleProducerService.sendVehicleData(vehicle);
-        System.out.println(getCurrentTime() + " - Vehicle ID: " + vehicle.getVehicleId() + " hedefe ulaştı.");
+        vehicleRepository.save(vehicle);  // Son durumu kaydet
+        vehicleProducerService.sendVehicleData(vehicle);  // Son bir bildirim gönder
     }
 
     @Async("taskExecutor")

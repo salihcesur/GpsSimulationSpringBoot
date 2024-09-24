@@ -16,15 +16,34 @@ public class DistanceCalculatorService {
     private String apiKey;
 
     public double calculateDistance(double[] start, double[] end) {
-        final int R = 6371;
-        double latDistance = Math.toRadians(end[0] - start[0]);
-        double lngDistance = Math.toRadians(end[1] - start[1]);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(start[0])) * Math.cos(Math.toRadians(end[0]))
-                * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+        String origin = start[0] + "," + start[1];
+        String destination = end[0] + "," + end[1];
+        String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + apiKey;
+
+        RestTemplate restTemplate = new RestTemplate();
+        String response = restTemplate.getForObject(url, String.class);
+
+        JSONObject jsonResponse = new JSONObject(response);
+        JSONArray routes = jsonResponse.getJSONArray("routes");
+
+        // En kısa rotanın toplam mesafesini alıyoruz
+        if (routes.length() > 0) {
+            JSONObject route = routes.getJSONObject(0);
+            JSONArray legs = route.getJSONArray("legs");
+
+            if (legs.length() > 0) {
+                JSONObject leg = legs.getJSONObject(0);
+                JSONObject distanceObject = leg.getJSONObject("distance");
+                double distanceInMeters = distanceObject.getDouble("value");
+
+                // Mesafeyi kilometreye çeviriyoruz
+                return distanceInMeters / 1000;
+            }
+        }
+
+        return 0;  // Eğer mesafe hesaplanamazsa 0 döndürüyoruz
     }
+
 
     public List<double[]> getRouteSteps(String origin, String destination) {
         String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" + origin + "&destination=" + destination + "&key=" + apiKey;

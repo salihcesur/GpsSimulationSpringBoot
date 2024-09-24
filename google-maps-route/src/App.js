@@ -3,7 +3,6 @@ import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from "@react-google
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
-// Harita ayarları
 const mapContainerStyle = {
   width: "100%",
   height: "500px",
@@ -16,7 +15,6 @@ const initialCenter = {
 
 const defaultZoom = 6;
 
-// İkon ayarları
 const iconWithLabel = (color) => ({
   url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
   labelOrigin: new window.google.maps.Point(15, 35),
