@@ -52,4 +52,13 @@ public class VehicleKafkaConsumer {
             throw new RuntimeException("Başlangıç/Bitiş şehir bildirimi işlenirken hata oluştu", e);
         }
     }
+
+    @KafkaListener(topics = "vehicle_last_location", groupId = "vehicle_group")
+    public void consumeEndLocationNotification(String notificationMessage) {
+        try {
+            messagingTemplate.convertAndSend("/topic/vehicleEndLocation", notificationMessage);
+        } catch (Exception e) {
+            throw new RuntimeException("Araç bitiş konumu bildirimi işlenirken hata oluştu", e);
+        }
+    }
 }

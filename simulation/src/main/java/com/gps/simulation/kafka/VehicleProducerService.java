@@ -11,6 +11,7 @@ public class VehicleProducerService {
     private static final String VEHICLE_TOPIC = "vehicle_data";
     private static final String NOTIFICATION_TOPIC = "vehicle_notification";
     private static final String START_END_TOPIC = "vehicle_start_end";
+    private static final String END_LOCATION_TOPIC = "vehicle_last_location";
 
     @Autowired
     private KafkaTemplate<String, Vehicle> kafkaTemplate;
@@ -33,5 +34,11 @@ public class VehicleProducerService {
         String message = "Araç " + vehicleId + " yola çıktı! Başlangıç: " + startCity + ", Bitiş: " + endCity;
         stringKafkaTemplate.send(START_END_TOPIC, vehicleId.toString(), message);
         System.out.println("Kafka'ya başlangıç ve bitiş şehir bilgisi gönderildi: " + message);
+    }
+
+    public void sendEndLocation(Long vehicleId, double latitude, double longitude) {
+        String message = "Araç " + vehicleId + " rotayı tamamladı! Son konum: (" + latitude + ", " + longitude + ")";
+        stringKafkaTemplate.send(END_LOCATION_TOPIC, vehicleId.toString(), message);
+        System.out.println("Kafka'ya araç bitiş konumu bildirimi gönderildi: " + message);
     }
 }

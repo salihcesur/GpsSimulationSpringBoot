@@ -85,6 +85,7 @@ public class RouteSimulator {
             vehicle.setStatus(Status.COMPLETED);
             vehicleRepository.save(vehicle);
             vehicleProducerService.sendVehicleData(vehicle);
+            vehicleProducerService.sendEndLocation(vehicle.getVehicleId(), vehicle.getCurrentLatitude(), vehicle.getCurrentLongitude());
 
         } catch (Exception e) {
             // Simülasyon sırasında hata oluşursa
