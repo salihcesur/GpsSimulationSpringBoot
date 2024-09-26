@@ -8,9 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -40,7 +37,7 @@ public class RouteSimulator {
     public void simulateVehicleJourney(Vehicle vehicle, List<double[]> routeSteps, int distanceInterval) {
         int stepIndex = 0;
         double totalDistance = 0;
-        double remainingDistanceToNotify = distanceInterval;
+        double nextNotificationAt = distanceInterval;
 
         try {
             if (!routeSteps.isEmpty()) {
@@ -59,7 +56,6 @@ public class RouteSimulator {
 
                 double distance = distanceCalculatorService.calculateDistance(currentStep, nextStep);
                 totalDistance += distance;
-                remainingDistanceToNotify -= distance;
 
                 vehicle.setCurrentLatitude(nextStep[0]);
                 vehicle.setCurrentLongitude(nextStep[1]);
@@ -70,15 +66,13 @@ public class RouteSimulator {
                     vehicleProducerService.sendCountryChangeNotification(vehicle.getVehicleId(), currentCountry);
                 }
 
-                if (remainingDistanceToNotify <= 0) {
+                // Check if we've reached or passed the next notification point
+                while (totalDistance >= nextNotificationAt) {
                     vehicleProducerService.sendVehicleData(vehicle);
-                    remainingDistanceToNotify = distanceInterval;
+                    nextNotificationAt += distanceInterval;
                 }
 
-                //vehicleRepository.save(vehicle);
-
                 Thread.sleep(500);
-
                 stepIndex++;
             }
 
@@ -88,13 +82,13 @@ public class RouteSimulator {
             vehicleProducerService.sendEndLocation(vehicle.getVehicleId(), vehicle.getCurrentLatitude(), vehicle.getCurrentLongitude());
 
         } catch (Exception e) {
-            // Simülasyon sırasında hata oluşursa
             vehicle.setStatus(Status.FAILED);
             vehicleRepository.save(vehicle);
             vehicleProducerService.sendVehicleData(vehicle);
-            System.err.println("Simülasyon sırasında bir hata oluştu: " + e.getMessage());
+            System.err.println("An error occurred during simulation: " + e.getMessage());
         }
     }
+
 
     @Async("taskExecutor")
     public void simulateJourney(int vehicleCount, int distanceInterval) {
