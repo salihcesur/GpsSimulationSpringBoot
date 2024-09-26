@@ -21,7 +21,7 @@ public class VehicleProducerService {
 
     public void sendVehicleData(Vehicle vehicle) {
         kafkaTemplate.send(VEHICLE_TOPIC, vehicle.getVehicleId().toString(), vehicle);
-        System.out.println("Kafka'ya araç verisi gönderildi: " + vehicle);
+        System.out.println("Kafka'ya araç verisi gönderildi: " + " " + "Id: " +vehicle.getVehicleId() + " " + "Bulunduğu Şehir: " + vehicle.getCurrentCountry() + " "+ "Statü: " + vehicle.getStatus());
     }
 
     public void sendCountryChangeNotification(Long vehicleId, String currentCountry) {

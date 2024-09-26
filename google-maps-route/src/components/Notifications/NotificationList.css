@@ -1,0 +1,44 @@
+/* NotificationList.css */
+
+.notification-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: #fdfdfd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .notification-title {
+    text-align: center;
+    color: #444;
+    font-weight: bold;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+  }
+  
+  .notification-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .notification-item {
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: background-color 0.3s;
+  }
+  
+  .notification-item:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .notification-item:last-child {
+    margin-bottom: 0;
+  }
+  

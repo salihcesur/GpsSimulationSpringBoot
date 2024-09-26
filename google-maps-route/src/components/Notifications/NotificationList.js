@@ -1,11 +1,12 @@
 import React from 'react';
+import './NotificationList.css';
 
 const NotificationList = ({ notifications }) => (
-  <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
-    <h3 style={{ textAlign: 'center', color: '#333', fontWeight: 'bold', marginBottom: '10px' }}>Ülke ve Şehir Bildirimleri</h3>
-    <ul style={{ listStyleType: 'none', padding: 0, margin: 0, maxHeight: '300px', overflowY: 'scroll' }}>
+  <div className="notification-container">
+    <h3 className="notification-title">Ülke ve Şehir Bildirimleri</h3>
+    <ul className="notification-list">
       {notifications.map((notification, index) => (
-        <li key={index} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#fff' }}>
+        <li key={index} className="notification-item">
           {notification}
         </li>
       ))}

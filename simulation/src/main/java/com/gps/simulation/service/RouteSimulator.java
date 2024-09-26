@@ -72,7 +72,7 @@ public class RouteSimulator {
                     nextNotificationAt += distanceInterval;
                 }
 
-                Thread.sleep(500);
+                Thread.sleep(200);
                 stepIndex++;
             }
 
